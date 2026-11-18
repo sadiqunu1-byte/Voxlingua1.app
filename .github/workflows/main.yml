@@ -1,0 +1,49 @@
+name: Build Voxlingua APK
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.47.9'
+          channel: 'stable'
+      - name: Prepare and Build APK
+        run: |
+          set -e
+          ZIP_F=$(ls *.zip 2>/dev/null | head -n 1)
+          rm -rf /tmp/ex /tmp/vox
+          mkdir -p /tmp/ex /tmp/vox
+          unzip -o "$ZIP_F" -d /tmp/ex
+          PUB=$(find /tmp/ex -maxdepth 4 -iname "pubspec.yaml" | head -n 1)
+          SRC=$(dirname "$PUB")
+          flutter create --platforms=android --org com.voxlingua --project-name voxlingua /tmp/vox
+          rm -rf /tmp/vox/test /tmp/vox/lib
+          cp -f "$PUB" /tmp/vox/pubspec.yaml
+          cp -r "$SRC/lib" /tmp/vox/lib
+          mkdir -p /tmp/vox/assets/images
+          [ -d "$SRC/assets" ] && cp -r "$SRC/assets/." /tmp/vox/assets/ || true
+          if [ ! -f /tmp/vox/assets/images/logo.png ]; then
+            python3 -c "import zlib,struct; w,h=64,64; raw=b''.join(b'\x00'+b'\x0b\x3b\x3c'*w for _ in range(h)); chk=lambda t,d: struct.pack('>I',len(d))+t+d+struct.pack('>I',zlib.crc32(t+d)&0xffffffff); open('/tmp/vox/assets/images/logo.png','wb').write(b'\x89PNG\r\n\x1a\n'+chk(b'IHDR',struct.pack('>IIBBBBB',w,h,8,2,0,0,0))+chk(b'IDAT',zlib.compress(raw))+chk(b'IEND',b''))"
+          fi
+          [ -f "$SRC/android/app/src/main/AndroidManifest.xml" ] && cp -f "$SRC/android/app/src/main/AndroidManifest.xml" /tmp/vox/android/app/src/main/AndroidManifest.xml || true
+          cd /tmp/vox
+          flutter pub get
+          dart run flutter_launcher_icons || true
+          flutter analyze --no-fatal-infos --no-fatal-warnings
+          flutter build apk --release
+          cp build/app/outputs/flutter-apk/app-release.apk "$GITHUB_WORKSPACE/app-release.apk"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Voxlingua-APK
+          path: app-release.apk
+          

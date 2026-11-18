@@ -38,6 +38,7 @@ jobs:
           [ -f "$SRC/android/app/src/main/AndroidManifest.xml" ] && cp -f "$SRC/android/app/src/main/AndroidManifest.xml" /tmp/vox/android/app/src/main/AndroidManifest.xml || true
           cd /tmp/vox
           flutter pub get
+          find ~/.pub-cache -name "build.gradle" -exec sed -i "s/proguard-android\.txt/proguard-android-optimize.txt/g" {} +
           dart run flutter_launcher_icons || true
           flutter analyze --no-fatal-infos --no-fatal-warnings
           flutter build apk --release

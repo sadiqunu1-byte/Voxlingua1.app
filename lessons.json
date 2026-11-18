@@ -1,0 +1,16 @@
+{
+  "appVersion": "1.0.0",
+  "appBuild": 1,
+  "apkUrl": "https://github.com/sadiqunu1-byte/Voxlingua1.app/releases/latest/download/app-release.apk",
+  "updateNotes": "تحديث جديد مع مشغل يوتيوب وتتبع الكلمة لحظياً.",
+  "forceUpdate": false,
+  "videos": [],
+  "lessons": {
+    "A1": [],
+    "A2": [],
+    "B1": [],
+    "B2": [],
+    "C1": [],
+    "C2": []
+  }
+}
